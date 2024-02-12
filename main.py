@@ -47,10 +47,29 @@ colours = {
 	'fairy': '#D685AD',
 }
 
-#load data from api. Pokemon api
-def get_pokeman_data() -> dict:
+#Get a random pockemon name
+randon_number = str(np.random.randint(1, 1000))
+randon_number_2 = str(np.random.randint(1, 1000))
+
+#Fetch the name of that pockemon
+def get_random_pokemon(number:int) -> str:
     try:
-        url = 'https://pokeapi.co/api/v2/pokemon/ditto'
+        url = 'https://pokeapi.co/api/v2/pokemon-species/' + number
+        response = requests.get(url)
+        data = response.json()
+    except Exception as e:
+        st.write(f'Error: {e}')
+        data = None
+    return data.get('name')
+
+poke_name = get_random_pokemon(randon_number)
+poke_name_2 = get_random_pokemon(randon_number_2)
+
+
+#load data from api. Pokemon api
+def get_pokeman_data(name) -> dict:
+    try:
+        url = 'https://pokeapi.co/api/v2/pokemon/' + name
         response = requests.get(url)
         data = response.json()
         return data
@@ -58,13 +77,33 @@ def get_pokeman_data() -> dict:
         st.write(f'Error: {e}')
         return None
 
-pokemon_data = get_pokeman_data() 
+pokemon_data = get_pokeman_data(poke_name)
+pokemon_data_2 = get_pokeman_data(poke_name_2)
 
-if pokemon_data:
-    st.header(pokemon_data.get('name').capitalize())
-    st.image(pokemon_data.get('sprites').get('front_default'))
-    st.write("Pokeman weight: ", pokemon_data.get('weight'))
-    poke_type = pokemon_data.get("types")[0].get("type").get("name")
-    annotated_text(
-        (poke_type, "", colours[poke_type])
-    )
+if pokemon_data and pokemon_data_2:
+    col1, col2, col3 = st.columns(3)
+
+    with col1: 
+        st.header(pokemon_data.get('name').capitalize())
+        st.image(pokemon_data.get('sprites').get('front_default'))
+        st.write("Pokeman weight: ", pokemon_data.get('weight'))
+        poke_type = pokemon_data.get("types")[0].get("type").get("name")
+        annotated_text(
+            (poke_type, "", colours[poke_type])
+        )
+    
+    with col2: 
+        stats_data = {stat.get('stat').get('name'): stat.get('base_stat') for stat in pokemon_data.get('stats')}
+        stats_data_2 = {stat.get('stat').get('name'): stat.get('base_stat') for stat in pokemon_data_2.get('stats')}
+        stats_df = pd.DataFrame([stats_data,stats_data_2])
+        st.bar_chart(stats_df)
+    
+    with col3: 
+        st.header(pokemon_data_2.get('name').capitalize())
+        st.image(pokemon_data_2.get('sprites').get('front_default'))
+        st.write("Pokeman weight: ", pokemon_data_2.get('weight'))
+        poke_type = pokemon_data_2.get("types")[0].get("type").get("name")
+        annotated_text(
+            (poke_type, "", colours[poke_type])
+        )
+    
